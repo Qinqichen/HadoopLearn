@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RemoteTargetsManager">
+    <targets>
+      <target name="root@192.168.202.101:22" type="ssh/sftp" uuid="6b1a55bf-2213-42a0-9fa8-0e45d6e6e38f">
+        <config>
+          <option name="projectRootOnTarget" value="/root/hadoopTest" />
+          <option name="serverName" value="root@192.168.202.101:22 agent" />
+        </config>
+        <ContributedStateBase type="JavaLanguageRuntime">
+          <config>
+            <option name="homePath" value="/usr/local/java/java8" />
+            <option name="javaVersionString" value="1.8.0_282" />
+          </config>
+        </ContributedStateBase>
+      </target>
+      <target name="root@150.158.32.183:22" type="ssh/sftp" uuid="d2408a69-97b5-4d6a-9249-44b33a683a92">
+        <config>
+          <option name="projectRootOnTarget" value="/root/qinhadoop/project" />
+          <option name="serverName" value="root@150.158.32.183:22 password" />
+        </config>
+        <ContributedStateBase type="JavaLanguageRuntime">
+          <config>
+            <option name="homePath" value="/usr/local/jdk1.8" />
+            <option name="javaVersionString" value="1.8.0_202" />
+          </config>
+        </ContributedStateBase>
+      </target>
+    </targets>
+  </component>
+</project>
