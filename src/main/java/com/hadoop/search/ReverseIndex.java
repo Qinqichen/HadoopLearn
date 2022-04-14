@@ -15,6 +15,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.net.URI;
+import java.util.*;
 
 public class ReverseIndex {
 
@@ -28,12 +29,23 @@ public class ReverseIndex {
                 Text value,
                 org.apache.hadoop.mapreduce.Mapper<LongWritable, Text, Text, Text>.Context context)
                 throws java.io.IOException, InterruptedException {
-            String[] data = value.toString().split(" ");
+
+            //删除一些停顿词
+            String valueString = value.toString().replaceAll("\\p{Punct}","")
+                    .replace(",","")
+                    .replace(":","")
+                    .replace("!","")
+                    .replace("?","")
+                    .replace(".","")
+                    .replace("'","")
+                    .replace(";","")
+                    .replace("\"","");
+
+            String[] data = valueString.split(" ");
             //FileSplit类从context上下文中得到，可以获得当前读取的文件的路径
             FileSplit fileSplit = (FileSplit) context.getInputSplit();
-            //文件路径为hdfs://hadoop:9000/ii/a.txt
             //根据/分割取最后一块即可得到当前的文件名
-            System.out.println(fileSplit.getPath().toString());
+//            System.out.println(fileSplit.getPath().toString());
             String[] fileNames = fileSplit.getPath().toString().split("/");
             String fileName = fileNames[fileNames.length - 1];
             for (String d : data) {
@@ -56,6 +68,7 @@ public class ReverseIndex {
                 java.lang.Iterable<Text> values,
                 org.apache.hadoop.mapreduce.Reducer<Text, Text, Text, Text>.Context context)
                 throws java.io.IOException, InterruptedException {
+
             //分割文件名和单词
             String[] wordAndPath = key.toString().split("->");
             //统计出现次数
@@ -79,11 +92,36 @@ public class ReverseIndex {
                 java.lang.Iterable<Text> values,
                 org.apache.hadoop.mapreduce.Reducer<Text, Text, Text, Text>.Context context)
                 throws java.io.IOException, InterruptedException {
+
             String res = "";
+
+            Map<String,Integer> files = new HashMap<>();
+
             for (Text text : values) {
-                res += text.toString() + "\r";
+
+                String[] file = text.toString().split("->");
+
+                files.put(file[0],Integer.parseInt(file[1]));
+
+                res += text.toString() + "*******\t";
             }
-            v.set(res);
+
+            List<Map.Entry<String, Integer>> list = new ArrayList<>(files.entrySet());
+            Collections.sort(list, new Comparator<Map.Entry<String, Integer>>() {
+                @Override
+                public int compare(Map.Entry<String, Integer> o1, Map.Entry<String, Integer> o2) {
+                    // 从大到小排序
+                     return (o2.getValue() - o1.getValue());
+                }
+            });
+
+            String result = "";
+
+            for (Map.Entry<String, Integer> entry : list) {
+                result += entry.getKey() + "->" + entry.getValue() + "\t";
+            }
+
+            v.set(result);
             context.write(key, v);
         };
     }
@@ -94,15 +132,16 @@ public class ReverseIndex {
 
         Configuration conf = new Configuration();
 
+        conf.set("dfs.client.use.datanode.hostname","true");
+
         FileSystem fs = FileSystem.get(new URI(baseUrl),conf,"root");
         Path inPath = new Path(baseUrl+"/qin/novels");
-        Path outPath = new Path(baseUrl+ "/qin/output/");
-
-        fs.create(new Path("/test/"));
+        Path outPath = new Path(baseUrl+ "/qin/novels/output/");
 
         if (fs.exists(outPath)) {
             fs.delete(outPath, true);
         }
+
         Job job = Job.getInstance(conf);
         job.setJarByClass(ReverseIndex.class);
 
@@ -116,6 +155,7 @@ public class ReverseIndex {
         job.setCombinerClass(MyCombiner.class);
 
         job.setReducerClass(MyReducer.class);
+
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
 
