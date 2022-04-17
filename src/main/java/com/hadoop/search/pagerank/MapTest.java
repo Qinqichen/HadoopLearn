@@ -9,6 +9,9 @@ import java.util.Arrays;
 public class MapTest extends Mapper<Text, Text, Text, Text> {
     /**
      * 数据可能是：<A,B   C>  <A,1    B   C>    <A,C>
+     *    A B C
+     *    A 1 B C
+     *    A 1
      *
      * @param key
      * @param value

@@ -30,6 +30,12 @@ public class ReverseIndex {
                 org.apache.hadoop.mapreduce.Mapper<LongWritable, Text, Text, Text>.Context context)
                 throws java.io.IOException, InterruptedException {
 
+            /*
+            key offset
+            value line
+             */
+
+
             //删除一些停顿词
             String valueString = value.toString().replaceAll("\\p{Punct}","")
                     .replace(",","")
@@ -52,6 +58,10 @@ public class ReverseIndex {
                 k.set(d + "->" + fileName);
                 v.set("1");
                 context.write(k, v);
+                /*
+                word->file
+                1
+                 */
             }
         };
     }
@@ -69,6 +79,11 @@ public class ReverseIndex {
                 org.apache.hadoop.mapreduce.Reducer<Text, Text, Text, Text>.Context context)
                 throws java.io.IOException, InterruptedException {
 
+            /*
+            word->file
+            1 1 1 1
+             */
+
             //分割文件名和单词
             String[] wordAndPath = key.toString().split("->");
             //统计出现次数
@@ -79,6 +94,10 @@ public class ReverseIndex {
             //组成新的key-value输出
             k.set(wordAndPath[0]);
             v.set(wordAndPath[1] + "->" + counts);
+            /*
+            key : word
+            value : file->4
+             */
             context.write(k, v);
         };
     }
@@ -93,6 +112,12 @@ public class ReverseIndex {
                 org.apache.hadoop.mapreduce.Reducer<Text, Text, Text, Text>.Context context)
                 throws java.io.IOException, InterruptedException {
 
+            /*
+            key : word
+            values: { file1->1 file2->2  }
+             */
+
+
             String res = "";
 
             Map<String,Integer> files = new HashMap<>();
@@ -103,7 +128,6 @@ public class ReverseIndex {
 
                 files.put(file[0],Integer.parseInt(file[1]));
 
-                res += text.toString() + "*******\t";
             }
 
             List<Map.Entry<String, Integer>> list = new ArrayList<>(files.entrySet());
@@ -120,6 +144,9 @@ public class ReverseIndex {
             for (Map.Entry<String, Integer> entry : list) {
                 result += entry.getKey() + "->" + entry.getValue() + "\t";
             }
+
+            System.out.println("key:"+key);
+            System.out.println("value:"+result);
 
             v.set(result);
             context.write(key, v);
